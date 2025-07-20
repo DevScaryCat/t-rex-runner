@@ -72,7 +72,7 @@
         let userId = prompt("최고 점수를 기록했습니다! 아이디를 입력하세요:", "Guest");
         if (!userId) userId = "Guest";
         try {
-          const response = await fetch("https://trex-highscore-server.onrender.com/api/scores", {
+          const response = await fetch("https://weathered-cell-da85.qkymzh123.workers.dev/api/scores", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ id: userId, score: score, timestamp: Date.now() }),
@@ -92,7 +92,7 @@
 
       window.displayHighScores = async function () {
         try {
-          const response = await fetch("https://trex-highscore-server.onrender.com/api/scores");
+          const response = await fetch("https://weathered-cell-da85.qkymzh123.workers.dev/api/scores");
           if (!response.ok) throw new Error("서버 응답 실패: " + response.status);
           const highScores = await response.json();
           let scoreDisplay = document.createElement("div");
@@ -124,7 +124,7 @@
 
       window.onGameOver = function (score) {
         console.log("게임 오버, 점수:", score);
-        fetch("https://trex-highscore-server.onrender.com/api/scores")
+        fetch("https://weathered-cell-da85.qkymzh123.workers.dev/api/scores")
           .then((response) => {
             if (!response.ok) throw new Error("서버 응답 실패: " + response.status);
             return response.json();
