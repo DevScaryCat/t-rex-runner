@@ -69,6 +69,25 @@
         padding: 5px 0;
         border-bottom: 1px solid #eee;
       }
+      .pagination {
+        margin-top: 15px;
+        display: flex;
+        justify-content: center;
+        gap: 10px;
+      }
+      .pagination button {
+        padding: 8px 16px;
+        border: none;
+        border-radius: 4px;
+        background: #4caf50;
+        color: white;
+        cursor: pointer;
+        font-size: 14px;
+      }
+      .pagination button:disabled {
+        background: #ccc;
+        cursor: not-allowed;
+      }
     </style>
   </head>
   <body>
@@ -81,10 +100,17 @@
       <div class="score-display" id="scoreDisplay">
         <h3>모든 점수 (상위 점수 순)</h3>
         <div id="scoreList"></div>
+        <div class="pagination">
+          <button onclick="prevPage()" id="prevButton" disabled>이전</button>
+          <span id="pageInfo"></span>
+          <button onclick="nextPage()" id="nextButton">다음</button>
+        </div>
       </div>
     </div>
     <script>
       const API_URL = "https://patient-hill-f5cd.qkymzh123.workers.dev";
+      let currentPage = 1;
+      const scoresPerPage = 10;
       let allScores = [];
 
       async function fetchScores() {
@@ -101,6 +127,7 @@
           allScores = await response.json();
           console.log("가져온 점수 데이터:", allScores.length, "개", allScores);
           allScores.sort((a, b) => b.score - a.score); // 점수 내림차순 정렬
+          currentPage = 1;
           displayScores();
           document.getElementById("scoreDisplay").style.display = "block";
           document.getElementById("adminPassword").value = "";
@@ -117,8 +144,15 @@
         if (allScores.length === 0) {
           scoreList.innerHTML = "<p>기록된 점수가 없습니다.</p>";
         } else {
-          console.log(`총 ${allScores.length}개 점수 표시`);
-          allScores.forEach((entry, index) => {
+          const start = (currentPage - 1) * scoresPerPage;
+          const end = Math.min(start + scoresPerPage, allScores.length);
+          const paginatedScores = allScores.slice(start, end);
+
+          console.log(
+            `페이지 ${currentPage}: ${paginatedScores.length}개 점수 표시, 시작 인덱스: ${start}, 종료 인덱스: ${end}`
+          );
+
+          paginatedScores.forEach((entry, index) => {
             const date = new Date(entry.timestamp).toLocaleDateString("ko-KR", {
               year: "numeric",
               month: "short",
@@ -127,11 +161,31 @@
             const scoreEntry = document.createElement("div");
             scoreEntry.className = "score-entry";
             scoreEntry.innerHTML = `
-              <span>${index + 1}. ${entry.id}</span>
+              <span>${start + index + 1}. ${entry.id}</span>
               <span>${entry.score.toLocaleString()} (${date})</span>
             `;
             scoreList.appendChild(scoreEntry);
           });
+
+          const totalPages = Math.ceil(allScores.length / scoresPerPage);
+          document.getElementById("pageInfo").textContent = `페이지 ${currentPage} / ${totalPages}`;
+          document.getElementById("prevButton").disabled = currentPage === 1;
+          document.getElementById("nextButton").disabled = currentPage >= totalPages;
+        }
+      }
+
+      function prevPage() {
+        if (currentPage > 1) {
+          currentPage--;
+          displayScores();
+        }
+      }
+
+      function nextPage() {
+        const totalPages = Math.ceil(allScores.length / scoresPerPage);
+        if (currentPage < totalPages) {
+          currentPage++;
+          displayScores();
         }
       }
     </script>
