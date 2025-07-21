@@ -36,10 +36,6 @@
         font-size: 18px;
         color: #333;
       }
-      #scoreModal p {
-        margin: 0 0 15px;
-        font-size: 16px;
-      }
       #scoreModal input {
         width: 80%;
         padding: 8px;
@@ -57,14 +53,27 @@
         cursor: pointer;
         font-size: 14px;
         font-family: "Open Sans", sans-serif;
-      }
-      #scoreModal .submit-btn {
         background: #4caf50;
         color: white;
       }
-      #scoreModal .cancel-btn {
-        background: #f44336;
+      #notification {
+        display: none;
+        position: fixed;
+        top: 20px;
+        right: 20px;
+        background: #4caf50;
         color: white;
+        padding: 10px 20px;
+        border-radius: 4px;
+        font-family: "Open Sans", sans-serif;
+        font-size: 14px;
+        z-index: 1000;
+        align-items: center;
+        gap: 10px;
+      }
+      #notification::before {
+        content: "✔";
+        font-size: 16px;
       }
     </style>
   </head>
@@ -101,16 +110,14 @@
     <div id="scoreModal">
       <div class="modal-content">
         <h3 id="modalTitle">유저 아이디 입력</h3>
-        <p id="modalMessage" style="display: none">점수: <span id="modalScore"></span></p>
         <input type="text" id="userIdInput" placeholder="아이디 입력 (기본: Guest)" />
-        <button class="submit-btn" onclick="submitAction()">제출</button>
-        <button class="cancel-btn" onclick="closeModal()">취소</button>
+        <button onclick="submitAction()">제출</button>
       </div>
     </div>
+    <div id="notification">점수가 기록되었습니다</div>
     <script>
       let bgmPlayed = false;
       let userId = localStorage.getItem("userId") || null;
-      let currentScore = 0;
       const API_URL = "https://patient-hill-f5cd.qkymzh123.workers.dev";
 
       // 페이지 로드 시 ID 입력 모달 표시 (이미 ID가 있으면 표시 안 함)
@@ -130,79 +137,68 @@
       }
 
       window.submitAction = async function () {
-        const userIdInput = document.getElementById("userIdInput").value.trim() || "Guest";
-        const modalTitle = document.getElementById("modalTitle").textContent;
+        userId = document.getElementById("userIdInput").value.trim() || "Guest";
+        localStorage.setItem("userId", userId);
+        console.log("유저 ID 저장:", userId);
 
-        if (modalTitle === "유저 아이디 입력") {
-          // 초기 ID 입력 처리
-          userId = userIdInput;
-          localStorage.setItem("userId", userId);
-          console.log("유저 ID 저장:", userId);
-
-          // BGM 재생 시작
-          const bgm = document.getElementById("bgm");
-          if (bgm && !bgmPlayed) {
-            console.log("BGM 재생 시도");
-            bgm.volume = 0.3;
-            bgm
-              .play()
-              .then(() => {
-                bgmPlayed = true;
-                console.log("BGM 재생 성공!");
-                closeModal();
-                okbuttonsend();
-              })
-              .catch((error) => {
-                console.error("BGM 재생 실패:", error.message);
-                alert("BGM 재생 실패: " + error.message);
-                closeModal();
-              });
-          } else {
-            closeModal();
-            okbuttonsend();
-          }
-        } else {
-          // 점수 저장 처리
-          try {
-            const response = await fetch(`${API_URL}/api/scores`, {
-              method: "POST",
-              headers: { "Content-Type": "application/json" },
-              body: JSON.stringify({ id: userId, score: currentScore, timestamp: Date.now() }),
-            });
-            if (response.ok) {
-              console.log("점수 저장 성공!");
+        // BGM 재생 시작
+        const bgm = document.getElementById("bgm");
+        if (bgm && !bgmPlayed) {
+          console.log("BGM 재생 시도");
+          bgm.volume = 0.3;
+          bgm
+            .play()
+            .then(() => {
+              bgmPlayed = true;
+              console.log("BGM 재생 성공!");
               closeModal();
-            } else {
-              throw new Error("서버 응답 실패: " + response.status);
-            }
-          } catch (error) {
-            console.error("점수 저장 실패:", error.message);
-            alert("점수 저장 실패: " + error.message);
-            closeModal();
-          }
+              okbuttonsend();
+            })
+            .catch((error) => {
+              console.error("BGM 재생 실패:", error.message);
+              alert("BGM 재생 실패: " + error.message);
+              closeModal();
+            });
+        } else {
+          closeModal();
+          okbuttonsend();
         }
       };
 
       window.closeModal = function () {
         document.getElementById("scoreModal").style.display = "none";
         document.getElementById("userIdInput").value = "";
-        document.getElementById("modalTitle").textContent = "유저 아이디 입력";
-        document.getElementById("modalMessage").style.display = "none";
       };
 
-      window.onGameOver = function (score) {
+      function showNotification() {
+        const notification = document.getElementById("notification");
+        notification.style.display = "flex";
+        setTimeout(() => {
+          notification.style.display = "none";
+        }, 3000); // 3초 후 사라짐
+      }
+
+      window.onGameOver = async function (score) {
         console.log("게임 오버, 점수:", score);
-        if (score >= 100 && userId) {
-          currentScore = score;
-          document.getElementById("modalTitle").textContent = "점수 기록";
-          document.getElementById("modalScore").textContent = score.toLocaleString();
-          document.getElementById("modalMessage").style.display = "block";
-          document.getElementById("scoreModal").style.display = "flex";
-          document.getElementById("userIdInput").value = userId;
-          document.getElementById("userIdInput").disabled = true; // ID 수정 불가
-          document.getElementById("userIdInput").focus();
+        if (userId) {
+          try {
+            const response = await fetch(`${API_URL}/api/scores`, {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ id: userId, score: score, timestamp: Date.now() }),
+            });
+            if (response.ok) {
+              console.log("점수 저장 성공!");
+              showNotification();
+            } else {
+              throw new Error("서버 응답 실패: " + response.status);
+            }
+          } catch (error) {
+            console.error("점수 저장 실패:", error.message);
+            alert("점수 저장 실패: " + error.message);
+          }
         } else {
-          console.log("점수 100 미만 또는 유저 ID 없음, 점수:", score);
+          console.log("유저 ID 없음, 점수:", score);
         }
       };
     </script>
