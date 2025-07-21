@@ -8,6 +8,65 @@
     <link href="https://fonts.googleapis.com/css?family=Open+Sans" rel="stylesheet" />
     <link rel="icon" href="favicon.ico" />
     <script src="index.js"></script>
+    <style>
+      #scoreModal {
+        display: none;
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0, 0, 0, 0.5);
+        z-index: 1000;
+        justify-content: center;
+        align-items: center;
+      }
+      #scoreModal .modal-content {
+        background: white;
+        padding: 20px;
+        border-radius: 8px;
+        text-align: center;
+        max-width: 300px;
+        width: 90%;
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+        font-family: "Open Sans", sans-serif;
+      }
+      #scoreModal h3 {
+        margin: 0 0 15px;
+        font-size: 18px;
+        color: #333;
+      }
+      #scoreModal p {
+        margin: 0 0 15px;
+        font-size: 16px;
+      }
+      #scoreModal input {
+        width: 80%;
+        padding: 8px;
+        margin-bottom: 15px;
+        border: 1px solid #ccc;
+        border-radius: 4px;
+        font-size: 14px;
+        font-family: "Open Sans", sans-serif;
+      }
+      #scoreModal button {
+        padding: 8px 16px;
+        margin: 0 5px;
+        border: none;
+        border-radius: 4px;
+        cursor: pointer;
+        font-size: 14px;
+        font-family: "Open Sans", sans-serif;
+      }
+      #scoreModal .submit-btn {
+        background: #4caf50;
+        color: white;
+      }
+      #scoreModal .cancel-btn {
+        background: #f44336;
+        color: white;
+      }
+    </style>
   </head>
   <body id="t" class="offline">
     <div id="messageBox" class="sendmessage">
@@ -38,7 +97,16 @@
       </div>
     </div>
     <div id="offline-resources-custom-sprite"></div>
-    <audio id="bgm" src="BGM.mp3" loop></audio>
+    <audio id="bgm" loop></audio>
+    <div id="scoreModal">
+      <div class="modal-content">
+        <h3>최고 점수 기록!</h3>
+        <p>점수: <span id="modalScore"></span></p>
+        <input type="text" id="userIdInput" placeholder="아이디 입력 (기본: Guest)" />
+        <button class="submit-btn" onclick="submitScore()">제출</button>
+        <button class="cancel-btn" onclick="closeModal()">취소</button>
+      </div>
+    </div>
     <script>
       let bgmPlayed = false;
       document.addEventListener("keydown", function (event) {
@@ -68,63 +136,45 @@
         }
       }
 
+      const API_URL = "https://patient-hill-f5cd.qkymzh123.workers.dev";
+      let currentScore = 0;
+
       window.saveScore = async function (score) {
-        let userId = prompt("최고 점수를 기록했습니다! 아이디를 입력하세요:", "Guest");
-        if (!userId) userId = "Guest";
+        currentScore = score;
+        document.getElementById("modalScore").textContent = score.toLocaleString();
+        document.getElementById("scoreModal").style.display = "flex";
+        document.getElementById("userIdInput").focus();
+      };
+
+      window.submitScore = async function () {
+        let userId = document.getElementById("userIdInput").value.trim() || "Guest";
         try {
-          const response = await fetch("https://patient-hill-f5cd.qkymzh123.workers.dev/api/scores", {
+          const response = await fetch(`${API_URL}/api/scores`, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ id: userId, score: score, timestamp: Date.now() }),
+            body: JSON.stringify({ id: userId, score: currentScore, timestamp: Date.now() }),
           });
           if (response.ok) {
             console.log("점수 저장 성공!");
-            alert("점수 저장 완료: " + userId + " - " + score);
-            window.displayHighScores();
+            closeModal();
           } else {
             throw new Error("서버 응답 실패: " + response.status);
           }
         } catch (error) {
           console.error("점수 저장 실패:", error.message);
           alert("점수 저장 실패: " + error.message);
+          closeModal();
         }
       };
 
-      window.displayHighScores = async function () {
-        try {
-          const response = await fetch("https://patient-hill-f5cd.qkymzh123.workers.dev/api/scores");
-          if (!response.ok) throw new Error("서버 응답 실패: " + response.status);
-          const highScores = await response.json();
-          let scoreDisplay = document.createElement("div");
-          scoreDisplay.id = "highScoreDisplay";
-          scoreDisplay.style.position = "absolute";
-          scoreDisplay.style.top = "20px";
-          scoreDisplay.style.right = "20px";
-          scoreDisplay.style.color = "black";
-          scoreDisplay.style.fontFamily = "'Open Sans', sans-serif";
-          scoreDisplay.style.background = "rgba(255, 255, 255, 0.8)";
-          scoreDisplay.style.padding = "10px";
-          scoreDisplay.style.borderRadius = "5px";
-          scoreDisplay.innerHTML = "<h3>최고 점수</h3>";
-          if (highScores.length === 0) {
-            scoreDisplay.innerHTML += "<p>기록된 점수가 없습니다.</p>";
-          } else {
-            highScores.forEach((entry, index) => {
-              scoreDisplay.innerHTML += `<p>${index + 1}. ${entry.id}: ${entry.score}</p>`;
-            });
-          }
-          let existingDisplay = document.getElementById("highScoreDisplay");
-          if (existingDisplay) existingDisplay.remove();
-          document.body.appendChild(scoreDisplay);
-        } catch (error) {
-          console.error("최고 점수 가져오기 실패:", error.message);
-          alert("최고 점수 가져오기 실패: " + error.message);
-        }
+      window.closeModal = function () {
+        document.getElementById("scoreModal").style.display = "none";
+        document.getElementById("userIdInput").value = "";
       };
 
       window.onGameOver = function (score) {
         console.log("게임 오버, 점수:", score);
-        fetch("https://patient-hill-f5cd.qkymzh123.workers.dev/api/scores")
+        fetch(`${API_URL}/api/scores`)
           .then((response) => {
             if (!response.ok) throw new Error("서버 응답 실패: " + response.status);
             return response.json();
@@ -144,8 +194,6 @@
             alert("최고 점수 확인 실패: " + error.message);
           });
       };
-
-      document.addEventListener("DOMContentLoaded", window.displayHighScores);
     </script>
   </body>
 </html>
