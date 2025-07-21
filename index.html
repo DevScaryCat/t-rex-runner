@@ -117,15 +117,14 @@
     <div id="notification">점수가 기록되었습니다</div>
     <script>
       let bgmPlayed = false;
-      let userId = localStorage.getItem("userId") || null;
+      let userId = null;
       const API_URL = "https://patient-hill-f5cd.qkymzh123.workers.dev";
 
-      // 페이지 로드 시 ID 입력 모달 표시 (이미 ID가 있으면 표시 안 함)
+      // 페이지 로드 시 localStorage 초기화 및 모달 표시
       window.onload = function () {
-        if (!userId) {
-          document.getElementById("scoreModal").style.display = "flex";
-          document.getElementById("userIdInput").focus();
-        }
+        localStorage.removeItem("userId"); // 항상 새 세션 시작
+        document.getElementById("scoreModal").style.display = "flex";
+        document.getElementById("userIdInput").focus();
       };
 
       function okbuttonsend() {
