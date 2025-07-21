@@ -125,12 +125,14 @@
             throw new Error(errorData.error || "서버 응답 실패");
           }
           allScores = await response.json();
+          console.log("가져온 점수 데이터:", allScores.length, "개", allScores);
           allScores.sort((a, b) => b.score - a.score); // 점수 내림차순 정렬
           currentPage = 1;
           displayScores();
           document.getElementById("scoreDisplay").style.display = "block";
           document.getElementById("adminPassword").value = "";
         } catch (error) {
+          console.error("점수 조회 실패:", error.message);
           alert("오류: " + error.message);
           document.getElementById("adminPassword").value = "";
         }
@@ -143,8 +145,12 @@
           scoreList.innerHTML = "<p>기록된 점수가 없습니다.</p>";
         } else {
           const start = (currentPage - 1) * scoresPerPage;
-          const end = start + scoresPerPage;
+          const end = Math.min(start + scoresPerPage, allScores.length);
           const paginatedScores = allScores.slice(start, end);
+
+          console.log(
+            `페이지 ${currentPage}: ${paginatedScores.length}개 점수 표시, 시작 인덱스: ${start}, 종료 인덱스: ${end}`
+          );
 
           paginatedScores.forEach((entry, index) => {
             const date = new Date(entry.timestamp).toLocaleDateString("ko-KR", {
@@ -164,7 +170,7 @@
           const totalPages = Math.ceil(allScores.length / scoresPerPage);
           document.getElementById("pageInfo").textContent = `페이지 ${currentPage} / ${totalPages}`;
           document.getElementById("prevButton").disabled = currentPage === 1;
-          document.getElementById("nextButton").disabled = currentPage === totalPages;
+          document.getElementById("nextButton").disabled = currentPage >= totalPages;
         }
       }
 
@@ -176,7 +182,8 @@
       }
 
       function nextPage() {
-        if (currentPage < Math.ceil(allScores.length / scoresPerPage)) {
+        const totalPages = Math.ceil(allScores.length / scoresPerPage);
+        if (currentPage < totalPages) {
           currentPage++;
           displayScores();
         }
