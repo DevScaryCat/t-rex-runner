@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+    <title>T-Rex Runner Admin</title>
+    <link rel="stylesheet" href="index.css" />
+    <link href="https://fonts.googleapis.com/css?family=Open+Sans" rel="stylesheet" />
+    <link rel="icon" href="favicon.ico" />
+    <style>
+      .admin-container {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        height: 100vh;
+        font-family: "Open Sans", sans-serif;
+        background: #f0f0f0;
+      }
+      .admin-form,
+      .score-display {
+        background: white;
+        padding: 20px;
+        border-radius: 8px;
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+        max-width: 400px;
+        width: 90%;
+        text-align: center;
+      }
+      .admin-form h2 {
+        margin: 0 0 15px;
+        font-size: 24px;
+        color: #333;
+      }
+      .admin-form input {
+        width: 80%;
+        padding: 10px;
+        margin-bottom: 15px;
+        border: 1px solid #ccc;
+        border-radius: 4px;
+        font-size: 16px;
+      }
+      .admin-form button {
+        padding: 10px 20px;
+        border: none;
+        border-radius: 4px;
+        background: #4caf50;
+        color: white;
+        font-size: 16px;
+        cursor: pointer;
+      }
+      .score-display {
+        display: none;
+        margin-top: 20px;
+      }
+      .score-display h3 {
+        margin: 0 0 15px;
+        font-size: 20px;
+        color: #333;
+      }
+      .score-display p {
+        margin: 5px 0;
+        font-size: 16px;
+        color: #555;
+      }
+      .score-entry {
+        display: flex;
+        justify-content: space-between;
+        padding: 5px 0;
+        border-bottom: 1px solid #eee;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="admin-container">
+      <div class="admin-form">
+        <h2>관리자 점수 조회</h2>
+        <input type="password" id="adminPassword" placeholder="패스워드 입력" />
+        <button onclick="fetchScores()">조회</button>
+      </div>
+      <div class="score-display" id="scoreDisplay">
+        <h3>최고 점수 (상위 5개)</h3>
+        <div id="scoreList"></div>
+      </div>
+    </div>
+    <script>
+      const API_URL = "https://patient-hill-f5cd.qkymzh123.workers.dev";
+
+      async function fetchScores() {
+        const password = document.getElementById("adminPassword").value;
+        try {
+          const response = await fetch(`${API_URL}/api/scores`, {
+            method: "GET",
+            headers: { "X-Admin-Password": password },
+          });
+          if (!response.ok) {
+            const errorData = await response.json();
+            throw new Error(errorData.error || "서버 응답 실패");
+          }
+          const scores = await response.json();
+          const scoreList = document.getElementById("scoreList");
+          scoreList.innerHTML = "";
+          if (scores.length === 0) {
+            scoreList.innerHTML = "<p>기록된 점수가 없습니다.</p>";
+          } else {
+            scores.forEach((entry, index) => {
+              const date = new Date(entry.timestamp).toLocaleDateString("ko-KR", {
+                year: "numeric",
+                month: "short",
+                day: "numeric",
+              });
+              const scoreEntry = document.createElement("div");
+              scoreEntry.className = "score-entry";
+              scoreEntry.innerHTML = `
+                <span>${index + 1}. ${entry.id}</span>
+                <span>${entry.score.toLocaleString()} (${date})</span>
+              `;
+              scoreList.appendChild(scoreEntry);
+            });
+          }
+          document.getElementById("scoreDisplay").style.display = "block";
+          document.getElementById("adminPassword").value = "";
+        } catch (error) {
+          alert("오류: " + error.message);
+          document.getElementById("adminPassword").value = "";
+        }
+      }
+    </script>
+  </body>
+</html>
