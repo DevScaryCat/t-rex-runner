@@ -96,7 +96,7 @@
       <div class="admin-form">
         <h2>관리자 점수 조회</h2>
         <input type="password" id="adminPassword" placeholder="패스워드 입력" />
-        <button onclick="fetchScores()">조회</button>
+        <button onclick="fetchInitialScores()">조회</button>
       </div>
       <div class="score-display" id="scoreDisplay">
         <h3>모든 점수 (상위 점수 순)</h3>
@@ -113,12 +113,12 @@
       const API_URL = "https://patient-hill-f5cd.qkymzh123.workers.dev";
       let currentPage = 1;
       const scoresPerPage = 10;
-      let allScores = [];
+      let totalPages = 0;
 
-      async function fetchScores() {
+      async function fetchInitialScores() {
         const password = document.getElementById("adminPassword").value;
         try {
-          const response = await fetch(`${API_URL}/api/scores?per_page=10000`, {
+          const response = await fetch(`${API_URL}/api/scores?page=1&per_page=${scoresPerPage}`, {
             method: "GET",
             headers: { "X-Admin-Password": password },
           });
@@ -128,12 +128,10 @@
           }
 
           const data = await response.json();
-          allScores = data.scores;
+          currentPage = data.currentPage;
+          totalPages = data.totalPages;
+          displayScores(data.scores);
 
-          console.log("가져온 점수 데이터:", allScores.length, "개", allScores);
-
-          currentPage = 1;
-          displayScores();
           document.getElementById("scoreDisplay").style.display = "block";
           document.getElementById("adminPassword").value = "";
         } catch (error) {
@@ -143,21 +141,37 @@
         }
       }
 
-      function displayScores() {
+      async function fetchScores(page) {
+        const password = document.getElementById("adminPassword").value;
+        try {
+          const response = await fetch(`${API_URL}/api/scores?page=${page}&per_page=${scoresPerPage}`, {
+            method: "GET",
+            headers: { "X-Admin-Password": password },
+          });
+
+          if (!response.ok) {
+            const errorData = await response.json();
+            throw new Error(errorData.error || "서버 응답 실패");
+          }
+
+          const data = await response.json();
+          currentPage = data.currentPage;
+          totalPages = data.totalPages;
+          displayScores(data.scores);
+        } catch (error) {
+          console.error("점수 조회 실패:", error.message);
+          alert("오류: " + error.message);
+        }
+      }
+
+      function displayScores(scores) {
         const scoreList = document.getElementById("scoreList");
         scoreList.innerHTML = "";
-        if (allScores.length === 0) {
+
+        if (scores.length === 0) {
           scoreList.innerHTML = "<p>기록된 점수가 없습니다.</p>";
         } else {
-          const start = (currentPage - 1) * scoresPerPage;
-          const end = Math.min(start + scoresPerPage, allScores.length);
-          const paginatedScores = allScores.slice(start, end);
-
-          console.log(
-            `페이지 ${currentPage}: ${paginatedScores.length}개 점수 표시, 시작 인덱스: ${start}, 종료 인덱스: ${end}`
-          );
-
-          paginatedScores.forEach((entry, index) => {
+          scores.forEach((entry, index) => {
             const date = new Date(entry.timestamp).toLocaleDateString("ko-KR", {
               year: "numeric",
               month: "short",
@@ -165,53 +179,69 @@
             });
             const scoreEntry = document.createElement("div");
             scoreEntry.className = "score-entry";
+            const rank = (currentPage - 1) * scoresPerPage + index + 1;
             scoreEntry.innerHTML = `
-              <span>${start + index + 1}. ${entry.id}</span>
+              <span>${rank}. ${entry.id}</span>
               <span>${entry.score.toLocaleString()} (${date})</span>
             `;
             scoreList.appendChild(scoreEntry);
           });
-
-          const totalPages = Math.ceil(allScores.length / scoresPerPage);
-          document.getElementById("pageInfo").textContent = `페이지 ${currentPage} / ${totalPages}`;
-          document.getElementById("prevButton").disabled = currentPage === 1;
-          document.getElementById("nextButton").disabled = currentPage >= totalPages;
         }
+
+        document.getElementById("pageInfo").textContent = `페이지 ${currentPage} / ${totalPages}`;
+        document.getElementById("prevButton").disabled = currentPage === 1;
+        document.getElementById("nextButton").disabled = currentPage >= totalPages;
       }
 
       function prevPage() {
         if (currentPage > 1) {
-          currentPage--;
-          displayScores();
+          fetchScores(currentPage - 1);
         }
       }
 
       function nextPage() {
-        const totalPages = Math.ceil(allScores.length / scoresPerPage);
         if (currentPage < totalPages) {
-          currentPage++;
-          displayScores();
+          fetchScores(currentPage + 1);
         }
       }
 
-      function downloadScores() {
-        if (allScores.length === 0) {
-          alert("다운로드할 점수 데이터가 없습니다.");
-          return;
+      async function downloadScores() {
+        const password = document.getElementById("adminPassword").value;
+        try {
+          const response = await fetch(`${API_URL}/api/scores?per_page=10000`, {
+            method: "GET",
+            headers: { "X-Admin-Password": password },
+          });
+
+          if (!response.ok) {
+            const errorData = await response.json();
+            throw new Error(errorData.error || "서버 응답 실패");
+          }
+
+          const data = await response.json();
+          const allScores = data.scores;
+
+          if (allScores.length === 0) {
+            alert("다운로드할 점수 데이터가 없습니다.");
+            return;
+          }
+
+          const jsonContent = JSON.stringify(allScores, null, 2);
+          const blob = new Blob([jsonContent], { type: "application/json" });
+          const url = URL.createObjectURL(blob);
+          const a = document.createElement("a");
+          a.href = url;
+          a.download = "scores.json";
+          document.body.appendChild(a);
+          a.click();
+
+          document.body.removeChild(a);
+          URL.revokeObjectURL(url);
+          alert("점수 데이터가 scores.json 파일로 다운로드됩니다.");
+        } catch (error) {
+          console.error("다운로드 실패:", error.message);
+          alert("오류: " + error.message);
         }
-
-        const jsonContent = JSON.stringify(allScores, null, 2);
-        const blob = new Blob([jsonContent], { type: "application/json" });
-        const url = URL.createObjectURL(blob);
-        const a = document.createElement("a");
-        a.href = url;
-        a.download = "scores.json";
-        document.body.appendChild(a);
-        a.click();
-
-        document.body.removeChild(a);
-        URL.revokeObjectURL(url);
-        alert("점수 데이터가 scores.json 파일로 다운로드됩니다.");
       }
     </script>
   </body>
