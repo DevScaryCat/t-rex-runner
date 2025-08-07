@@ -787,7 +787,9 @@
       console.log("Distance ran:", this.distanceRan, "Calculated score:", score);
       if (score > this.highestScore) {
         this.highestScore = score;
-        this.distanceMeter.setHighScore(this.highestScore);
+        // 화면에 표시될 최고 점수를 4로 나누고 정수로 만듭니다.
+        const displayHighScore = Math.floor(this.highestScore / 4);
+        this.distanceMeter.setHighScore(displayHighScore);
       }
 
       if (typeof window.onGameOver === "function") {
@@ -795,7 +797,6 @@
       } else {
         console.error("window.onGameOver is not defined");
       }
-
       // Reset the time clock.
       this.time = getTimeStamp();
     },
@@ -2093,12 +2094,10 @@
      * @param {number} distance Distance ran in pixels.
      */
     setHighScore: function (distance) {
-      distance = this.getActualDistance(distance);
-      var highScoreStr = (this.defaultString + distance).substr(-this.maxScoreUnits);
-
-      this.highScore = ["10", "11", ""].concat(highScoreStr.split(""));
+      // distance = this.getActualDistance(distance); // 이 라인을 삭제하거나 주석 처리
+      var highScoreStr = distance.toString().padStart(this.maxScoreUnits, "0");
+      this.highScore = highScoreStr.split("");
     },
-
     /**
      * Reset the distance meter back to '00000'.
      */
