@@ -48,7 +48,7 @@
         color: white;
         font-size: 16px;
         cursor: pointer;
-        margin: 5px; /* 버튼 간 간격 추가 */
+        margin: 5px;
       }
       .score-display {
         display: none;
@@ -118,7 +118,7 @@
       async function fetchScores() {
         const password = document.getElementById("adminPassword").value;
         try {
-          const response = await fetch(`${API_URL}/api/scores`, {
+          const response = await fetch(`${API_URL}/api/scores?per_page=10000`, {
             method: "GET",
             headers: { "X-Admin-Password": password },
           });
@@ -126,9 +126,12 @@
             const errorData = await response.json();
             throw new Error(errorData.error || "서버 응답 실패");
           }
-          allScores = await response.json();
+
+          const data = await response.json();
+          allScores = data.scores;
+
           console.log("가져온 점수 데이터:", allScores.length, "개", allScores);
-          allScores.sort((a, b) => b.score - a.score); // 점수 내림차순 정렬
+
           currentPage = 1;
           displayScores();
           document.getElementById("scoreDisplay").style.display = "block";
@@ -197,13 +200,8 @@
           return;
         }
 
-        // 데이터를 JSON 문자열로 변환
         const jsonContent = JSON.stringify(allScores, null, 2);
-
-        // Blob 객체 생성 (MIME 타입 지정)
         const blob = new Blob([jsonContent], { type: "application/json" });
-
-        // 다운로드 링크 생성
         const url = URL.createObjectURL(blob);
         const a = document.createElement("a");
         a.href = url;
@@ -211,10 +209,8 @@
         document.body.appendChild(a);
         a.click();
 
-        // 생성된 URL과 요소 정리
         document.body.removeChild(a);
         URL.revokeObjectURL(url);
-
         alert("점수 데이터가 scores.json 파일로 다운로드됩니다.");
       }
     </script>
