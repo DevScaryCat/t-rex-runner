@@ -149,15 +149,19 @@
               console.log("BGM 재생 성공!");
               closeModal();
               okbuttonsend();
+              startGame();
             })
             .catch((error) => {
               console.error("BGM 재생 실패:", error.message);
               alert("BGM 재생 실패: " + error.message);
               closeModal();
+              okbuttonsend();
+              startGame();
             });
         } else {
           closeModal();
           okbuttonsend();
+          startGame();
         }
       };
 
@@ -165,6 +169,16 @@
         document.getElementById("scoreModal").style.display = "none";
         document.getElementById("userIdInput").value = "";
       };
+
+      function startGame() {
+        if (window.Runner && window.Runner.instance_) {
+          console.log("게임 시작 시도");
+          window.Runner.instance_.playIntro();
+        } else {
+          console.error("Runner 인스턴스가 초기화되지 않음");
+          alert("게임 시작 실패: Runner 인스턴스가 준비되지 않았습니다.");
+        }
+      }
 
       function showNotification() {
         const notification = document.getElementById("notification");
@@ -175,15 +189,13 @@
       }
 
       window.onGameOver = async function (score) {
-        console.log("게임 오버, 원본 점수:", score);
-        const adjustedScore = Math.floor(score / 10); // 스케일링 제거
-        console.log("조정된 점수:", adjustedScore);
+        console.log("게임 오버, 점수:", score);
         if (userId) {
           try {
             const response = await fetch(`${API_URL}/api/scores`, {
               method: "POST",
               headers: { "Content-Type": "application/json" },
-              body: JSON.stringify({ id: userId, score: adjustedScore, timestamp: Date.now() }),
+              body: JSON.stringify({ id: userId, score: score, timestamp: Date.now() }),
             });
             if (response.ok) {
               console.log("점수 저장 성공!");
@@ -196,7 +208,7 @@
             alert("점수 저장 실패: " + error.message);
           }
         } else {
-          console.log("유저 ID 없음, 점수:", adjustedScore);
+          console.log("유저 ID 없음, 점수:", score);
         }
       };
     </script>
