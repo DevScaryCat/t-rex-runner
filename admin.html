@@ -48,6 +48,7 @@
         color: white;
         font-size: 16px;
         cursor: pointer;
+        margin: 5px; /* 버튼 간 간격 추가 */
       }
       .score-display {
         display: none;
@@ -99,6 +100,7 @@
       </div>
       <div class="score-display" id="scoreDisplay">
         <h3>모든 점수 (상위 점수 순)</h3>
+        <button onclick="downloadScores()" style="background-color: #008cba">JSON 다운로드</button>
         <div id="scoreList"></div>
         <div class="pagination">
           <button onclick="prevPage()" id="prevButton" disabled>이전</button>
@@ -187,6 +189,33 @@
           currentPage++;
           displayScores();
         }
+      }
+
+      function downloadScores() {
+        if (allScores.length === 0) {
+          alert("다운로드할 점수 데이터가 없습니다.");
+          return;
+        }
+
+        // 데이터를 JSON 문자열로 변환
+        const jsonContent = JSON.stringify(allScores, null, 2);
+
+        // Blob 객체 생성 (MIME 타입 지정)
+        const blob = new Blob([jsonContent], { type: "application/json" });
+
+        // 다운로드 링크 생성
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = "scores.json";
+        document.body.appendChild(a);
+        a.click();
+
+        // 생성된 URL과 요소 정리
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+
+        alert("점수 데이터가 scores.json 파일로 다운로드됩니다.");
       }
     </script>
   </body>
