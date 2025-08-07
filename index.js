@@ -770,7 +770,6 @@
       this.tRex.update(100, Trex.status.CRASHED);
 
       // Game over panel.
-
       if (!this.gameOverPanel) {
         this.gameOverPanel = new GameOverPanel(
           this.canvas,
@@ -783,7 +782,7 @@
       }
 
       // Update the high score.
-      const score = Math.ceil(this.distanceRan / 10) || 1; // 최소 1점 보장
+      const score = this.distanceMeter.getActualDistance(Math.ceil(this.distanceRan));
       console.log("Distance ran:", this.distanceRan, "Calculated score:", score);
       if (score > this.highestScore) {
         this.highestScore = score;

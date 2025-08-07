@@ -106,7 +106,7 @@
       </div>
     </div>
     <div id="offline-resources-custom-sprite"></div>
-    <audio id="bgm" src="BGM.mp3" loop></audio>
+    <audio id="bgm" loop></audio>
     <div id="scoreModal">
       <div class="modal-content">
         <h3 id="modalTitle">인스타 그램 아이디를 적어주세요</h3>
@@ -120,9 +120,8 @@
       let userId = null;
       const API_URL = "https://patient-hill-f5cd.qkymzh123.workers.dev";
 
-      // 페이지 로드 시 localStorage 초기화 및 모달 표시
       window.onload = function () {
-        localStorage.removeItem("userId"); // 항상 새 세션 시작
+        localStorage.removeItem("userId");
         document.getElementById("scoreModal").style.display = "flex";
         document.getElementById("userIdInput").focus();
       };
@@ -139,8 +138,6 @@
         userId = document.getElementById("userIdInput").value.trim() || "Guest";
         localStorage.setItem("userId", userId);
         console.log("유저 ID 저장:", userId);
-
-        // BGM 재생 시작
         const bgm = document.getElementById("bgm");
         if (bgm && !bgmPlayed) {
           console.log("BGM 재생 시도");
@@ -174,7 +171,7 @@
         notification.style.display = "flex";
         setTimeout(() => {
           notification.style.display = "none";
-        }, 3000); // 3초 후 사라짐
+        }, 3000);
       }
 
       window.onGameOver = async function (score) {
