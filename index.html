@@ -106,7 +106,7 @@
       </div>
     </div>
     <div id="offline-resources-custom-sprite"></div>
-    <audio id="bgm" loop></audio>
+    <audio id="bgm" src="BGM.mp3" loop></audio>
     <div id="scoreModal">
       <div class="modal-content">
         <h3 id="modalTitle">인스타 그램 아이디를 적어주세요</h3>
@@ -120,8 +120,9 @@
       let userId = null;
       const API_URL = "https://patient-hill-f5cd.qkymzh123.workers.dev";
 
+      // 페이지 로드 시 localStorage 초기화 및 모달 표시
       window.onload = function () {
-        localStorage.removeItem("userId");
+        localStorage.removeItem("userId"); // 항상 새 세션 시작
         document.getElementById("scoreModal").style.display = "flex";
         document.getElementById("userIdInput").focus();
       };
@@ -138,6 +139,8 @@
         userId = document.getElementById("userIdInput").value.trim() || "Guest";
         localStorage.setItem("userId", userId);
         console.log("유저 ID 저장:", userId);
+
+        // BGM 재생 시작
         const bgm = document.getElementById("bgm");
         if (bgm && !bgmPlayed) {
           console.log("BGM 재생 시도");
@@ -149,19 +152,15 @@
               console.log("BGM 재생 성공!");
               closeModal();
               okbuttonsend();
-              startGame();
             })
             .catch((error) => {
               console.error("BGM 재생 실패:", error.message);
               alert("BGM 재생 실패: " + error.message);
               closeModal();
-              okbuttonsend();
-              startGame();
             });
         } else {
           closeModal();
           okbuttonsend();
-          startGame();
         }
       };
 
@@ -170,22 +169,12 @@
         document.getElementById("userIdInput").value = "";
       };
 
-      function startGame() {
-        if (window.Runner && window.Runner.instance_) {
-          console.log("게임 시작 시도");
-          window.Runner.instance_.playIntro();
-        } else {
-          console.error("Runner 인스턴스가 초기화되지 않음");
-          alert("게임 시작 실패: Runner 인스턴스가 준비되지 않았습니다.");
-        }
-      }
-
       function showNotification() {
         const notification = document.getElementById("notification");
         notification.style.display = "flex";
         setTimeout(() => {
           notification.style.display = "none";
-        }, 3000);
+        }, 3000); // 3초 후 사라짐
       }
 
       window.onGameOver = async function (score) {
