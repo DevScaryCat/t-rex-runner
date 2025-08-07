@@ -770,7 +770,6 @@
       this.tRex.update(100, Trex.status.CRASHED);
 
       // Game over panel.
-
       if (!this.gameOverPanel) {
         this.gameOverPanel = new GameOverPanel(
           this.canvas,
@@ -782,16 +781,22 @@
         this.gameOverPanel.draw();
       }
 
-      // Update the high score.
-      const score = Math.ceil(this.distanceRan / 10) || 1; // 최소 1점 보장
-      console.log("Distance ran:", this.distanceRan, "Calculated score:", score);
-      if (score > this.highestScore) {
-        this.highestScore = score;
+      // Calculate scores
+      const displayScore = Math.floor(this.distanceRan); // 화면에 표시되는 점수 (원래 값)
+      const serverScore = Math.floor(this.distanceRan * 4); // 서버로 전송되는 점수 (4배)
+
+      // Update the high score (using displayScore)
+      if (displayScore > this.highestScore) {
+        this.highestScore = displayScore;
         this.distanceMeter.setHighScore(this.highestScore);
       }
 
+      // Log for debugging
+      console.log("Distance ran:", this.distanceRan, "Display score:", displayScore, "Server score:", serverScore);
+
+      // Send serverScore to the server
       if (typeof window.onGameOver === "function") {
-        window.onGameOver(score);
+        window.onGameOver(serverScore);
       } else {
         console.error("window.onGameOver is not defined");
       }
