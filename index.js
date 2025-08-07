@@ -2079,58 +2079,24 @@
      * Draw the high score.
      */
     drawHighScore: function () {
-      console.log("Rendering highScore:", this.highScore); // 디버깅 로그
       this.canvasCtx.save();
       this.canvasCtx.globalAlpha = 0.8;
-
-      // "HI" 접두어 렌더링
-      var highScoreX = this.x - (this.maxScoreUnits + 2) * 2 * DistanceMeter.dimensions.WIDTH;
-      this.canvasCtx.translate(highScoreX, this.y);
-
-      // "H" (10) 렌더링
-      this.canvasCtx.drawImage(
-        this.image,
-        DistanceMeter.dimensions.WIDTH * 10 + this.spritePos.x,
-        this.spritePos.y,
-        DistanceMeter.dimensions.WIDTH * (IS_HIDPI ? 2 : 1),
-        DistanceMeter.dimensions.HEIGHT * (IS_HIDPI ? 2 : 1),
-        0,
-        this.y,
-        DistanceMeter.dimensions.WIDTH,
-        DistanceMeter.dimensions.HEIGHT
-      );
-
-      // "I" (11) 렌더링
-      this.canvasCtx.drawImage(
-        this.image,
-        DistanceMeter.dimensions.WIDTH * 11 + this.spritePos.x,
-        this.spritePos.y,
-        DistanceMeter.dimensions.WIDTH * (IS_HIDPI ? 2 : 1),
-        DistanceMeter.dimensions.HEIGHT * (IS_HIDPI ? 2 : 1),
-        DistanceMeter.dimensions.DEST_WIDTH,
-        this.y,
-        DistanceMeter.dimensions.WIDTH,
-        DistanceMeter.dimensions.HEIGHT
-      );
-
-      // 점수 자릿수 렌더링
-      var highScoreStr = (this.defaultString + this.highScore).substr(-this.maxScoreUnits);
-      for (var i = 0; i < highScoreStr.length; i++) {
-        this.draw(i + 2, parseInt(highScoreStr[i], 10), true); // "HI" 이후로 렌더링
+      for (var i = this.highScore.length - 1; i >= 0; i--) {
+        this.draw(i, parseInt(this.highScore[i], 10), true);
       }
-
       this.canvasCtx.restore();
     },
+
     /**
-     * Set the highscore as a number.
+     * Set the highscore as a array string.
+     * Position of char in the sprite: H - 10, I - 11.
      * @param {number} distance Distance ran in pixels.
      */
     setHighScore: function (distance) {
       distance = this.getActualDistance(distance);
-      if (distance > this.highScore) {
-        this.highScore = distance;
-        console.log("최고 점수 갱신:", this.highScore);
-      }
+      var highScoreStr = (this.defaultString + distance).substr(-this.maxScoreUnits);
+
+      this.highScore = ["10", "11", ""].concat(highScoreStr.split(""));
     },
 
     /**
