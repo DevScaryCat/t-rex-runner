@@ -759,6 +759,9 @@
     /**
      * Game over state.
      */
+    /**
+     * Game over state.
+     */
     gameOver: function () {
       this.playSound(this.soundFx.HIT);
       vibrate(200);
@@ -770,7 +773,6 @@
       this.tRex.update(100, Trex.status.CRASHED);
 
       // Game over panel.
-
       if (!this.gameOverPanel) {
         this.gameOverPanel = new GameOverPanel(
           this.canvas,
@@ -783,15 +785,16 @@
       }
 
       // Update the high score.
-      const score = Math.ceil(this.distanceRan / 10) || 1; // 최소 1점 보장
-      console.log("Distance ran:", this.distanceRan, "Calculated score:", score);
-      if (score > this.highestScore) {
-        this.highestScore = score;
+      // 픽셀 거리를 실제 점수로 변환하여 하이스코어에 표시합니다.
+      const finalScore = this.distanceMeter.getActualDistance(this.distanceRan);
+      if (finalScore > this.highestScore) {
+        this.highestScore = finalScore;
         this.distanceMeter.setHighScore(this.highestScore);
       }
 
       if (typeof window.onGameOver === "function") {
-        window.onGameOver(score);
+        // 서버에는 픽셀 거리(기존 데이터 형식)를 그대로 전달합니다.
+        window.onGameOver(this.distanceRan);
       } else {
         console.error("window.onGameOver is not defined");
       }
