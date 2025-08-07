@@ -759,9 +759,6 @@
     /**
      * Game over state.
      */
-    /**
-     * Game over state.
-     */
     gameOver: function () {
       this.playSound(this.soundFx.HIT);
       vibrate(200);
@@ -773,6 +770,7 @@
       this.tRex.update(100, Trex.status.CRASHED);
 
       // Game over panel.
+
       if (!this.gameOverPanel) {
         this.gameOverPanel = new GameOverPanel(
           this.canvas,
@@ -785,7 +783,7 @@
       }
 
       // Update the high score.
-      const score = Math.floor(this.distanceRan); // distanceRan을 그대로 점수로 사용
+      const score = Math.ceil(this.distanceRan / 10) || 1; // 최소 1점 보장
       console.log("Distance ran:", this.distanceRan, "Calculated score:", score);
       if (score > this.highestScore) {
         this.highestScore = score;
