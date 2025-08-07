@@ -787,8 +787,7 @@
       console.log("Distance ran:", this.distanceRan, "Calculated score:", score);
       if (score > this.highestScore) {
         this.highestScore = score;
-        // 화면에 표시될 최고 점수를 4로 나누고 정수로 만듭니다.
-        const displayHighScore = Math.floor(this.highestScore / 4);
+        const displayHighScore = Math.round(this.highestScore / 4); // Math.round로 변경
         this.distanceMeter.setHighScore(displayHighScore);
       }
 
